@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Rentabilidad — Aquí Me Quedo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card-border: #2a2d3a;
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.15);
+    --gold: #f59e0b;
+    --gold-soft: rgba(245,158,11,0.12);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59,130,246,0.12);
+    --text: #e2e4ea;
+    --text-dim: #8b8fa3;
+    --text-muted: #5a5e72;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+    padding: 32px 24px;
+    background: linear-gradient(135deg, #1a1d27 0%, #252837 100%);
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--green), var(--gold), var(--blue));
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .header .bar-name {
+    display: inline-block;
+    background: var(--gold-soft);
+    color: var(--gold);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+  }
+
+  .kpi .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .kpi .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 900;
+  }
+
+  .kpi .detail {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .kpi.positive .value { color: var(--green); }
+  .kpi.negative .value { color: var(--red); }
+  .kpi.neutral .value { color: var(--blue); }
+  .kpi.gold .value { color: var(--gold); }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    padding-left: 12px;
+    border-left: 3px solid var(--gold);
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+
+  .chart-svg {
+    width: 100%;
+    min-width: 600px;
+    height: 320px;
+  }
+
+  .chart-svg text {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .tooltip-box {
+    position: fixed;
+    background: #252837;
+    border: 1px solid #3a3d4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #e2e4ea;
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    body { padding: 14px; }
+    .header h1 { font-size: 22px; }
+  }
+
+  .verdict-box {
+    background: linear-gradient(135deg, #1a2a1a 0%, #1a1d27 100%);
+    border: 2px solid var(--green);
+    border-radius: 14px;
+    padding: 28px 24px;
+    margin-top: 28px;
+    text-align: center;
+  }
+
+  .verdict-box h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .verdict-box p {
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .verdict-box .highlight {
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .roi-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 18px;
+    margin: 8px 0;
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    background: #252837;
+    padding: 10px 8px;
+    text-align: right;
+    color: var(--text-dim);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+  }
+
+  thead th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+
+  tbody td {
+    padding: 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--card-border);
+    color: var(--text);
+  }
+
+  tbody td:first-child { text-align: left; color: var(--text-dim); }
+
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  .bar-hover:hover { opacity: 0.8; cursor: pointer; }
+  .line-dot:hover { r: 5; cursor: pointer; }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="tooltip-box" id="tooltip"></div>
+
+<div class="header">
+  <div class="bar-name">Aquí Me Quedo</div>
+  <h1>Reporte de Rentabilidad</h1>
+  <div class="subtitle">3 Máquinas de Casino · Impuesto $35/máquina/semana · Período: Dic 2024 — Abr 2026</div>
+</div>
+
+<div class="kpi-grid" id="kpis"></div>
+
+<div class="section-title">Ganancia Semanal (después de impuestos)</div>
+<div class="chart-card">
+  <svg id="weeklyChart" class="chart-svg"></svg>
+</div>
+
+<div class="two-col">
+  <div>
+    <div class="section-title">Ganancia Acumulada</div>
+    <div class="chart-card">
+      <svg id="cumulativeChart" class="chart-svg"></svg>
+    </div>
+  </div>
+  <div>
+    <div class="section-title">Colectado vs Premios</div>
+    <div class="chart-card">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Colectado</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Premios</div>
+      </div>
+      <svg id="collectedChart" class="chart-svg"></svg>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Ganancia Mensual Total</div>
+<div class="chart-card">
+  <svg id="monthlyChart" class="chart-svg"></svg>
+</div>
+
+<div class="section-title">Proyección 3 Años vs Costo del Contrato ($3,000)</div>
+<div class="chart-card">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Ganancia Acumulada</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Costo Contrato</div>
+  </div>
+  <svg id="projectionChart" class="chart-svg"></svg>
+</div>
+
+<div id="verdict"></div>
+
+<div class="section-title" style="margin-top:28px;">Datos Semanales Detallados</div>
+<div class="chart-card">
+  <div class="table-wrap" id="dataTable"></div>
+</div>
+
+<script>
+const data = [
+  {fecha:"12/9/2024",colectado:679,premios:583,jcj:105,ganancia:-9,ganacu:-4.5},
+  {fecha:"12/16/2024",colectado:1058,premios:743,jcj:105,ganancia:210,ganacu:105},
+  {fecha:"12/23/2024",colectado:795,premios:626,jcj:105,ganancia:64,ganacu:32},
+  {fecha:"12/30/2024",colectado:1298,premios:953,jcj:105,ganancia:240,ganacu:120},
+  {fecha:"1/13/2025",colectado:902,premios:643,jcj:105,ganancia:154,ganacu:77},
+  {fecha:"1/20/2025",colectado:905,premios:629,jcj:105,ganancia:171,ganacu:85.5},
+  {fecha:"1/27/2025",colectado:911,premios:736,jcj:105,ganancia:70,ganacu:35},
+  {fecha:"2/3/2025",colectado:956,premios:678,jcj:105,ganancia:173,ganacu:86.5},
+  {fecha:"2/10/2025",colectado:467,premios:303,jcj:105,ganancia:59,ganacu:29.5},
+  {fecha:"3/10/2025",colectado:542,premios:425,jcj:105,ganancia:12,ganacu:6},
+  {fecha:"3/17/2025",colectado:697,premios:491,jcj:105,ganancia:101,ganacu:50.5},
+  {fecha:"3/31/2025",colectado:919,premios:705,jcj:105,ganancia:109,ganacu:54.5},
+  {fecha:"4/7/2025",colectado:912,premios:731,jcj:105,ganancia:76,ganacu:38},
+  {fecha:"4/21/2025",colectado:1263,premios:935,jcj:105,ganancia:223,ganacu:111.5},
+  {fecha:"4/28/2025",colectado:773,premios:590,jcj:105,ganancia:78,ganacu:39},
+  {fecha:"5/5/2025",colectado:1060,premios:754,jcj:105,ganancia:201,ganacu:100.5},
+  {fecha:"5/12/2025",colectado:816,premios:560,jcj:105,ganancia:151,ganacu:75.5},
+  {fecha:"5/19/2025",colectado:667,premios:434,jcj:105,ganancia:128,ganacu:64},
+  {fecha:"5/26/2025",colectado:1036,premios:675,jcj:105,ganancia:256,ganacu:128},
+  {fecha:"6/9/2025",colectado:1428,premios:1111,jcj:105,ganancia:212,ganacu:106},
+  {fecha:"6/16/2025",colectado:625,premios:330,jcj:105,ganancia:190,ganacu:95},
+  {fecha:"6/23/2025",colectado:976,premios:602,jcj:105,ganancia:269,ganacu:134.5},
+  {fecha:"6/30/2025",colectado:813,premios:712,jcj:105,ganancia:-4,ganacu:-2},
+  {fecha:"7/7/2025",colectado:979,premios:557,jcj:105,ganancia:317,ganacu:158.5},
+  {fecha:"7/14/2025",colectado:855,premios:408,jcj:105,ganancia:342,ganacu:171},
+  {fecha:"7/21/2025",colectado:1491,premios:961,jcj:105,ganancia:425,ganacu:212.5},
+  {fecha:"7/28/2025",colectado:1060,premios:767,jcj:105,ganancia:188,ganacu:94},
+  {fecha:"8/4/2025",colectado:1018,premios:475,jcj:105,ganancia:438,ganacu:219},
+  {fecha:"8/11/2025",colectado:1125,premios:804,jcj:105,ganancia:216,ganacu:108},
+  {fecha:"8/18/2025",colectado:1034,premios:680,jcj:105,ganancia:249,ganacu:124.5},
+  {fecha:"8/25/2025",colectado:1115,premios:886,jcj:105,ganancia:124,ganacu:62},
+  {fecha:"9/1/2025",colectado:829,premios:382,jcj:105,ganancia:342,ganacu:171},
+  {fecha:"9/8/2025",colectado:1353,premios:1145,jcj:105,ganancia:103,ganacu:51.5},
+  {fecha:"9/15/2025",colectado:815,premios:473,jcj:105,ganancia:237,ganacu:118.5},
+  {fecha:"9/22/2025",colectado:1051,premios:914,jcj:105,ganancia:32,ganacu:16},
+  {fecha:"9/29/2025",colectado:518,premios:184,jcj:105,ganancia:229,ganacu:114.5},
+  {fecha:"10/6/2025",colectado:1027,premios:574,jcj:105,ganancia:348,ganacu:174},
+  {fecha:"10/13/2025",colectado:1343,premios:909,jcj:105,ganancia:329,ganacu:164.5},
+  {fecha:"10/20/2025",colectado:1353,premios:908,jcj:105,ganancia:340,ganacu:170},
+  {fecha:"10/27/2025",colectado:1025,premios:735,jcj:105,ganancia:185,ganacu:92.5},
+  {fecha:"11/10/2025",colectado:1536,premios:994,jcj:105,ganancia:437,ganacu:218.5},
+  {fecha:"11/17/2025",colectado:1134,premios:776,jcj:105,ganancia:253,ganacu:126.5},
+  {fecha:"11/24/2025",colectado:809,premios:689,jcj:105,ganancia:15,ganacu:7.5},
+  {fecha:"12/1/2025",colectado:1086,premios:641,jcj:105,ganancia:340,ganacu:170},
+  {fecha:"12/8/2025",colectado:1219,premios:1191,jcj:105,ganancia:-77,ganacu:-38.5},
+  {fecha:"12/15/2025",colectado:1291,premios:580,jcj:105,ganancia:606,ganacu:303},
+  {fecha:"12/22/2025",colectado:1107,premios:622,jcj:105,ganancia:380,ganacu:190},
+  {fecha:"12/29/2025",colectado:1239,premios:662,jcj:105,ganancia:472,ganacu:236},
+  {fecha:"1/5/2026",colectado:1676,premios:1326,jcj:105,ganancia:245,ganacu:122.5},
+  {fecha:"1/12/2026",colectado:1040,premios:539,jcj:105,ganancia:396,ganacu:198},
+  {fecha:"1/19/2026",colectado:1487,premios:1236,jcj:105,ganancia:146,ganacu:73},
+  {fecha:"1/26/2026",colectado:1462,premios:698,jcj:105,ganancia:659,ganacu:329.5},
+  {fecha:"2/2/2026",colectado:857,premios:676,jcj:105,ganancia:76,ganacu:38},
+  {fecha:"2/9/2026",colectado:1136,premios:961,jcj:105,ganancia:70,ganacu:35},
+  {fecha:"2/16/2026",colectado:959,premios:667,jcj:105,ganancia:187,ganacu:93.5},
+  {fecha:"2/23/2026",colectado:1017,premios:448,jcj:105,ganancia:464,ganacu:232},
+  {fecha:"3/2/2026",colectado:987,premios:747,jcj:105,ganancia:135,ganacu:67.5},
+  {fecha:"3/9/2026",colectado:1142,premios:802,jcj:105,ganancia:235,ganacu:117.5},
+  {fecha:"3/16/2026",colectado:679,premios:381,jcj:105,ganancia:193,ganacu:96.5},
+  {fecha:"3/23/2026",colectado:678,premios:572,jcj:105,ganancia:1,ganacu:0.5},
+  {fecha:"3/30/2026",colectado:1089,premios:1016,jcj:105,ganancia:-32,ganacu:-16},
+  {fecha:"4/6/2026",colectado:1250,premios:815,jcj:105,ganancia:330,ganacu:165},
+  {fecha:"4/13/2026",colectado:1055,premios:991,jcj:105,ganancia:-41,ganacu:-20.5},
+  {fecha:"4/20/2026",colectado:1075,premios:751,jcj:105,ganancia:219,ganacu:109.5}
+];
+
+// === CALCULATIONS ===
+const totalGanancia = data.reduce((s,d) => s + d.ganancia, 0);
+const totalWeeks = data.length;
+const avgWeekly = totalGanancia / totalWeeks;
+const avgMonthly = avgWeekly * 4.33;
+const avgYearly = avgWeekly * 52;
+const positiveWeeks = data.filter(d => d.ganancia > 0).length;
+const negativeWeeks = data.filter(d => d.ganancia < 0).length;
+const maxGanancia = Math.max(...data.map(d => d.ganancia));
+const minGanancia = Math.min(...data.map(d => d.ganancia));
+const totalColectado = data.reduce((s,d) => s + d.colectado, 0);
+const totalPremios = data.reduce((s,d) => s + d.premios, 0);
+
+const contractCost = 3000;
+const contractYears = 3;
+const contractWeeks = contractYears * 52;
+const projectedTotal3yr = avgWeekly * contractWeeks;
+const netAfterContract = projectedTotal3yr - contractCost;
+const roi = ((projectedTotal3yr - contractCost) / contractCost) * 100;
+const weeksToRecover = Math.ceil(contractCost / avgWeekly);
+const monthsToRecover = (weeksToRecover / 4.33).toFixed(1);
+
+// === KPIs ===
+document.getElementById('kpis').innerHTML = `
+  <div class="kpi positive">
+    <div class="label">Ganancia Total</div>
+    <div class="value">$${totalGanancia.toLocaleString()}</div>
+    <div class="detail">${totalWeeks} semanas registradas</div>
+  </div>
+  <div class="kpi neutral">
+    <div class="label">Promedio Semanal</div>
+    <div class="value">$${avgWeekly.toFixed(0)}</div>
+    <div class="detail">$${avgMonthly.toFixed(0)}/mes · $${avgYearly.toFixed(0)}/año</div>
+  </div>
+  <div class="kpi positive">
+    <div class="label">Semanas Positivas</div>
+    <div class="value">${positiveWeeks}/${totalWeeks}</div>
+    <div class="detail">${((positiveWeeks/totalWeeks)*100).toFixed(0)}% rentable</div>
+  </div>
+  <div class="kpi gold">
+    <div class="label">Mejor Semana</div>
+    <div class="value">$${maxGanancia}</div>
+    <div class="detail">Peor: $${minGanancia}</div>
+  </div>
+  <div class="kpi neutral">
+    <div class="label">Margen Bruto</div>
+    <div class="value">${((1 - totalPremios/totalColectado)*100).toFixed(1)}%</div>
+    <div class="detail">Antes de impuestos</div>
+  </div>
+  <div class="kpi positive">
+    <div class="label">ROI Contrato 3 Años</div>
+    <div class="value">${roi.toFixed(0)}%</div>
+    <div class="detail">Recupera en ~${monthsToRecover} meses</div>
+  </div>
+`;
+
+// === TOOLTIP ===
+const tooltip = document.getElementById('tooltip');
+function showTip(evt, text) {
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = text;
+  tooltip.style.left = (evt.clientX + 12) + 'px';
+  tooltip.style.top = (evt.clientY - 10) + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+// === SVG CHART HELPERS ===
+function drawBarChart(svgId, values, labels, tooltipFn) {
+  const svg = document.getElementById(svgId);
+  const rect = svg.getBoundingClientRect();
+  const W = rect.width || 800;
+  const H = rect.height || 320;
+  const pad = { top: 20, right: 20, bottom: 55, left: 55 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  const maxVal = Math.max(...values.map(Math.abs), 1);
+  const yMax = maxVal * 1.1;
+  const yMin = Math.min(0, Math.min(...values)) * 1.2;
+  const yRange = yMax - yMin;
+
+  const barW = Math.max(2, (cW / values.length) - 2);
+  const zeroY = pad.top + (yMax / yRange) * cH;
+
+  let html = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+
+  // Grid lines
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const val = yMin + (yRange / steps) * i;
+    const y = pad.top + cH - (cH / steps) * i;
+    html += `<line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="#2a2d3a" stroke-width="0.5"/>`;
+    html += `<text x="${pad.left - 8}" y="${y + 4}" fill="#8b8fa3" font-size="10" text-anchor="end">$${Math.round(val)}</text>`;
+  }
+
+  // Zero line
+  html += `<line x1="${pad.left}" y1="${zeroY}" x2="${W - pad.right}" y2="${zeroY}" stroke="#5a5e72" stroke-width="1"/>`;
+
+  // Bars
+  values.forEach((v, i) => {
+    const x = pad.left + (cW / values.length) * i + 1;
+    const barH = Math.abs(v) / yRange * cH;
+    const y = v >= 0 ? zeroY - barH : zeroY;
+    const color = v >= 0 ? '#22c55e' : '#ef4444';
+    html += `<rect class="bar-hover" x="${x}" y="${y}" width="${barW}" height="${barH}" fill="${color}" rx="2"
+      onmousemove="showTip(event, '${tooltipFn(i, v)}')" onmouseout="hideTip()"/>`;
+  });
+
+  // X labels (every N)
+  const step = Math.max(1, Math.floor(values.length / 12));
+  labels.forEach((l, i) => {
+    if (i % step === 0) {
+      const x = pad.left + (cW / values.length) * i + barW / 2;
+      html += `<text x="${x}" y="${H - 8}" fill="#8b8fa3" font-size="9" text-anchor="middle" transform="rotate(-45 ${x} ${H - 15})">${l}</text>`;
+    }
+  });
+
+  html += '</svg>';
+  svg.outerHTML = html;
+}
+
+function drawLineChart(svgId, datasets, labels, yPrefix) {
+  const svg = document.getElementById(svgId);
+  const rect = svg.getBoundingClientRect();
+  const W = rect.width || 800;
+  const H = rect.height || 320;
+  const pad = { top: 20, right: 20, bottom: 55, left: 60 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  let allVals = [];
+  datasets.forEach(ds => allVals.push(...ds.data));
+  const yMax = Math.max(...allVals) * 1.1;
+  const yMin = Math.min(0, Math.min(...allVals)) * 1.1;
+  const yRange = yMax - yMin || 1;
+
+  let html = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+
+  // Grid
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const val = yMin + (yRange / steps) * i;
+    const y = pad.top + cH - (cH / steps) * i;
+    html += `<line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="#2a2d3a" stroke-width="0.5"/>`;
+    html += `<text x="${pad.left - 8}" y="${y + 4}" fill="#8b8fa3" font-size="10" text-anchor="end">${yPrefix}${Math.round(val).toLocaleString()}</text>`;
+  }
+
+  datasets.forEach(ds => {
+    const points = ds.data.map((v, i) => {
+      const x = pad.left + (cW / (ds.data.length - 1)) * i;
+      const y = pad.top + cH - ((v - yMin) / yRange) * cH;
+      return { x, y, v };
+    });
+
+    // Fill area
+    if (ds.fill) {
+      const baseY = pad.top + cH - ((0 - yMin) / yRange) * cH;
+      let path = `M ${points[0].x} ${points[0].y}`;
+      points.slice(1).forEach(p => path += ` L ${p.x} ${p.y}`);
+      path += ` L ${points[points.length-1].x} ${baseY} L ${points[0].x} ${baseY} Z`;
+      html += `<path d="${path}" fill="${ds.color}" opacity="0.08"/>`;
+    }
+
+    // Line
+    let linePath = `M ${points[0].x} ${points[0].y}`;
+    points.slice(1).forEach(p => linePath += ` L ${p.x} ${p.y}`);
+    html += `<path d="${linePath}" fill="none" stroke="${ds.color}" stroke-width="2" ${ds.dash ? 'stroke-dasharray="8 4"' : ''}/>`;
+
+    // Dots
+    if (!ds.noDots) {
+      points.forEach((p, i) => {
+        html += `<circle class="line-dot" cx="${p.x}" cy="${p.y}" r="3" fill="${ds.color}" stroke="none"
+          onmousemove="showTip(event, '${ds.tipFn ? ds.tipFn(i, p.v) : yPrefix + Math.round(p.v)}')" onmouseout="hideTip()"/>`;
+      });
+    }
+  });
+
+  // X labels
+  const step = Math.max(1, Math.floor(labels.length / 12));
+  labels.forEach((l, i) => {
+    if (i % step === 0) {
+      const x = pad.left + (cW / (labels.length - 1)) * i;
+      html += `<text x="${x}" y="${H - 8}" fill="#8b8fa3" font-size="9" text-anchor="middle" transform="rotate(-45 ${x} ${H - 15})">${l}</text>`;
+    }
+  });
+
+  html += '</svg>';
+  svg.outerHTML = html;
+}
+
+// === RENDER CHARTS ===
+const shortLabels = data.map(d => { const p = d.fecha.split('/'); return p[0]+'/'+p[1]; });
+
+// 1. Weekly bar chart
+drawBarChart('weeklyChart',
+  data.map(d => d.ganancia),
+  shortLabels,
+  (i, v) => `${data[i].fecha}<br>Ganancia: $${v}`
+);
+
+// 2. Cumulative line
+const cumulative = [];
+data.reduce((acc, d) => { acc += d.ganancia; cumulative.push(acc); return acc; }, 0);
+
+drawLineChart('cumulativeChart',
+  [{ data: cumulative, color: '#f59e0b', fill: true, tipFn: (i, v) => `${data[i].fecha} — Acum: $${Math.round(v)}` }],
+  shortLabels, '$'
+);
+
+// 3. Collected vs Prizes
+drawLineChart('collectedChart',
+  [
+    { data: data.map(d => d.colectado), color: '#3b82f6', fill: true, tipFn: (i, v) => `${data[i].fecha}<br>Colectado: $${v}` },
+    { data: data.map(d => d.premios), color: '#ef4444', fill: false, tipFn: (i, v) => `${data[i].fecha}<br>Premios: $${v}` }
+  ],
+  shortLabels, '$'
+);
+
+// 4. Monthly totals
+const monthlyMap = {};
+data.forEach(d => {
+  const [m,,y] = d.fecha.split('/');
+  const key = `${y}-${m.padStart(2,'0')}`;
+  if (!monthlyMap[key]) monthlyMap[key] = [];
+  monthlyMap[key].push(d.ganancia);
+});
+const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const sortedMonths = Object.keys(monthlyMap).sort();
+const monthlyLabels = sortedMonths.map(k => { const [y,m] = k.split('-'); return `${monthNames[parseInt(m)-1]} ${y.slice(2)}`; });
+const monthlyTotals = sortedMonths.map(k => monthlyMap[k].reduce((a,b) => a+b, 0));
+
+drawBarChart('monthlyChart',
+  monthlyTotals,
+  monthlyLabels,
+  (i, v) => `${monthlyLabels[i]}<br>Total: $${v}`
+);
+
+// 5. Projection
+const projPoints = 50;
+const projData = Array.from({length: projPoints}, (_, i) => {
+  const week = Math.round((i / (projPoints - 1)) * 156);
+  return { week, val: week * avgWeekly };
+});
+const projLabels = projData.map(p => `S${p.week}`);
+
+drawLineChart('projectionChart',
+  [
+    { data: projData.map(p => p.val), color: '#22c55e', fill: true, noDots: true,
+      tipFn: (i, v) => `Semana ${projData[i].week} (~${(projData[i].week/4.33).toFixed(0)} meses)<br>Ganancia: $${Math.round(v).toLocaleString()}` },
+    { data: projData.map(() => contractCost), color: '#ef4444', dash: true, noDots: true }
+  ],
+  projLabels, '$'
+);
+
+// === VERDICT ===
+document.getElementById('verdict').innerHTML = `
+  <div class="verdict-box">
+    <h2>✅ RECOMENDACIÓN: RENOVAR CONTRATO</h2>
+    <div class="roi-badge">ROI Proyectado: ${roi.toFixed(0)}%</div>
+    <p>
+      Con un promedio semanal de <strong>$${avgWeekly.toFixed(0)}</strong> de ganancia,
+      en <strong>3 años (156 semanas)</strong> se proyecta una ganancia total de
+      <span class="highlight">$${projectedTotal3yr.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span>.<br><br>
+      Descontando el costo del contrato de <strong>$3,000</strong>,
+      la ganancia neta proyectada es de <span class="highlight">$${netAfterContract.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</span>.<br><br>
+      La inversión se recuperaría en aproximadamente <strong>${monthsToRecover} meses</strong> (~${weeksToRecover} semanas).
+      El ${((positiveWeeks/totalWeeks)*100).toFixed(0)}% de las semanas han sido rentables, con solo ${negativeWeeks} semanas en pérdida.
+    </p>
+  </div>
+`;
+
+// === TABLE ===
+let tableHTML = `<table><thead><tr>
+  <th>Fecha</th><th>Colectado</th><th>Premios</th><th>Impuesto</th><th>Ganancia</th><th>Gan c/u</th>
+</tr></thead><tbody>`;
+data.forEach(d => {
+  const cls = d.ganancia >= 0 ? 'pos' : 'neg';
+  tableHTML += `<tr>
+    <td>${d.fecha}</td><td>$${d.colectado}</td><td>$${d.premios}</td>
+    <td>$${d.jcj}</td><td class="${cls}">$${d.ganancia}</td><td class="${cls}">$${d.ganacu}</td>
+  </tr>`;
+});
+tableHTML += '</tbody></table>';
+document.getElementById('dataTable').innerHTML = tableHTML;
+</script>
+
+</body>
+</html>
